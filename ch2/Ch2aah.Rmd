@@ -1,0 +1,179 @@
+---
+title: 'Managing Data with R'
+author: "Avik Mohan"
+output: html_document
+---
+
+Now that we know how to store data in data structures, lets see how we can manage what we have in these structures.
+
+We are going to be using the '01a_data.txt' and '01_hdp.csv' files from the biomedical database for this section.
+I keep these folders locally in my ~/AAUCLA/SOCR/data folder, but rename the path of your file to fit your directory.
+
+```{r}
+`patientData` <- read.delim("~/AAUCLA/SOCR/data/01a_data.txt")
+x <- patientData[1,]
+y <- patientData[2,]
+```
+
+To save our objects (say we had objects patientData, x, and y) we can use
+```{r}
+save(x, y, patientData, file = "nameHere.RData")
+```
+
+similarly, to load, we use
+```{r}
+load("nameHere.RData")
+x
+```
+
+##CSV Files
+
+Statistical data is often kept in comma-separated-value (CSV) files. This is a tabular data format, i.e. data is kept in rows and columns. CSV files use commas as their 'delimiter', or the symbol they use to separate values from one another. Other common delimiters are tab, or space (refer to how we first read in the patientData in the last section, where the data had a space character as the delimiter).
+
+To load in CSV data, we use a type of read()
+```{r}
+medData <- read.csv("~/AAUCLA/SOCR/data/01_hdp.csv", header=TRUE)#, stringsAsFactors = FALSE)
+medData[1:10,]
+medData[0,4]
+```
+
+Here, we set the 'option' header=TRUE since the first row the data is not actual data, but titles of the columns. The option header=TRUE takes this row and makes headers out of what is there. This option is included in read.csv by default, so it could have been omitted here. 
+Also, we could use the 'stringsAsFactors = False' option. This option tells R to *not* automatically set all string columns to factors. Even if some columns are factors, it is often better to manually set this later, than to let R decide what to do. Here, R correctly identifies the factors, so we leave this option out.
+
+To save a data frame back into a csv file, use
+```{r}
+write.csv(medData, file="~/AAUCLA/SOCR/data/medData.csv")
+```
+
+##Exploring the Data
+
+Lets look more closely at our medData. We inspect the structure of the data using the str() command.
+
+```{r}
+str(medData)
+```
+
+Notice that the 'Married' variable is a factor but due to its numeric values, wasn't recognized as a factor. To recode this as a factor, we do
+```{r}
+medData$Married <- factor(medData$Married, levels = c("0", "1"),  labels = c("No", "Yes"))
+str(medData)
+```
+
+We now see that 'Married' is correctly identified as a factor.
+
+Now, we can use the summary() function to take a look at some common statistics for our data
+```{r}
+summary(medData$tumorsize)
+```
+
+Here, we look at the summary for the 'mobility' variable specifically.
+We can see that we are provided with a set of commonly sought after statstics about the data. The 1st and 3rd Quartile measurements are the values below which or above which, respectively,  which one quarter of the values in the data are found.
+
+The minimum and maximum values give us the range of the data:
+```{r}
+range(medData$tumorsize)
+diff(range(medData$tumorsize))
+```
+
+The diff command simply takes the difference of the two values it is passed.
+Similarly, the difference between the 1st and 3rd quartile is known as the *interquartile range (IQR)* and can be found using
+```{r}
+IQR(medData$tumorsize)
+```
+
+Quantiles alone can be inspected using 
+```{r}
+quantile(medData$tumorsize)
+quantile(medData$tumorsize, probs = c(0.01, 0.1, 1, 0.9, 0.999))
+quantile(medData$tumorsize, .1)
+quantile(medData$tumorsize, seq(from = 0, to = 1, by = .2))
+```
+
+Boxplots function as another great way to inspect data
+
+```{r}
+boxplot(medData$tumorsize, main = "Tumor Size")
+boxplot(medData$ntumors, main="Number Tumors")
+boxplot(medData$nmorphine, main = "Amount of Morphine")
+```
+
+The 'ntumors' variable shows relatively low spread, but the 'nmorphine' and 'tumorsize' variables show a larger number of outliers. Boxplots are useful for looking at the spreads of data in this sense.
+
+Histograms provide another means to inspect the nature of the data:
+```{r}
+hist(medData$pain, main = "Reported Pain", xlab = "Reported Pain")
+hist(medData$nmorphine, main = "Amount of Morphine", xlab = "Amount of Morhpine")
+```
+
+We can see from the histogram that Pain Reported follows a more normal distribution, while 'nmorphine' does not.
+
+Another, more quantitative measure of the data's spread is availible to us as variance and standard deviation.
+
+####STDEV Picure of eq here
+
+To compute these values, we use
+```{r}
+var(medData$pain)
+sd(medData$pain)
+var(medData$nmorphine)
+sd(medData$nmorphine)
+```
+
+Note that standard deviation is the square root of the variance.
+
+##Exploring Categorical Variables
+
+The table() command lists the types and counts of values for each category.
+
+```{r}
+table(medData$CancerStage)
+```
+
+We can also get the proportions each category type makes of the whole:
+```{r}
+prop.table(table(medData$CancerStage))
+```
+
+We can see that Stage I cancer makes up approximately 30% of the data.
+
+###Scatterplots
+
+We can form scatterplots of our data, showing the relationship between two variables.
+
+```{r}
+plot( x = medData$BMI, y=medData$lungcapacity, xlab = "BMI", ylab = "Lung Capacity")
+plot(medData$Age, medData$lungcapacity, xlab = "Age", ylab = "Lung Capacity")
+```
+
+These aren't quite nice direct relationships. Lets look at the '05_data1.csv' file from the SOCR repository
+
+```{r}
+waterData <- read.csv("~/AAUCLA/SOCR/data/05_data1.csv", header=TRUE)#, stringsAsFactors = FALSE)
+plot(x=waterData[30:70,3], waterData[30:70,6], xlab = "Year", ylab = "Transect Algae")
+```
+
+
+We can also use 'two-way cross-tablulation' to look at relationships between data. To make this simple, we download the gmodels package.
+
+Note that below, we create the 'everSmoked' binary variable, turning the 3 level smoking history data into a 2 level set of smoking data. Using the '%in%' operator, we return TRUE or FALSE for each value in the vector on the left if its contained in the right hand side set.
+
+```{r}
+library(gmodels)
+install.packages("gmodels")
+table(medData$Sex)
+table(medData$SmokingHx)
+
+CrossTable(x = medData$Sex, y = medData$SmokingHx, chisq = TRUE)
+
+medData$everSmoked <- medData$SmokingHx %in% c("current", "former")
+
+CrossTable(x = medData$Sex, y = medData$everSmoked, chisq = TRUE)
+
+plot(medData$Sex, medData$SmokingHx)
+
+```
+
+
+We gain a lot of information from this crosstab. We can see from the row proportions (the third row of data in the center boxes) that 47.1% of women from this dataset smoked, and 29.4% of men from the data smoked. In addition to these proportions, we can use the 'chisq' option to also return p-values. Here, we can see that we have an extremely large Chi-Square statistic, so we conclude there exists some reation between the variables.
+
+That concludes the exposition into machine learning with R. We now begin our first machine learning technique, k-nearest-neighbors classification.

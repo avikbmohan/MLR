@@ -1,0 +1,108 @@
+---
+title: "kNN - Further Exploration"
+author: "Avik Mohan"
+date: "May 24, 2016"
+output: html_document
+runtime: shiny
+---
+
+What we will do here is again conduct the kNN algorithm, but using as many of the predictors as we can to help train our model. 
+
+We will also use the '08_EpiBioSData_Complete.csv' data from the SOCR biomed repository, which includes much more data. Note that in this dataset, one needs to manually 'line-up' the data, as the mutliple records of data are kept in the same rows. In essence, move all the columns with the suffixes '.1' and '.2' to line up with the data without the numeric suffixes.
+
+This section will contain significantly less explanation of the steps taken, as they mirror the process covered in main kNN article.
+
+```{r}
+injury <- read.csv("~/AAUCLA/SOCR/data/fullInjuryData.csv")
+str(injury)
+
+#remove columns, spikes.hr, min.hr, max.hr
+injury_subset <- injury[,-c(1)]
+
+#Transform types of variables
+#injury_subset$field.gcs <- as.integer(levels(injury_subset$field.gcs))[injury_subset$field.gcs]
+#injury_subset$er.gcs <- as.integer(levels(injury_subset$er.gcs))[injury_subset$er.gcs]
+#injury_subset$icu.gcs <- as.integer(levels(injury_subset$icu.gcs))[injury_subset$icu.gcs]
+#injury_subset$worst.gcs <- as.integer(levels(injury_subset$worst.gcs))[injury_subset$worst.gcs]
+
+#Create dummy binary variables from binary factors
+injury_subset$male <- as.integer(injury_subset$sex)
+injury_subset$how <- as.integer(injury_subset$mechanism)
+#Remove the factors that we have just created dummy vars for
+injury_subset <- injury_subset[,-c(2,3)]
+
+##Code surgery as a factor for use in kNN
+injury_subset$surgery <- factor(injury_subset$surgery, levels = c("0", "1"), labels = c("No", "Yes"))
+##
+str(injury_subset)
+
+#Define normalization function
+minmax <- function(x){
+  return ((x-min(x)) / (max(x) - min(x)))
+}
+##Create predictor matrix, leaving out surgery
+injury_predictors <- as.data.frame(lapply(injury_subset[,-10], minmax))
+str(injury_predictors)
+##Delineate the training and test data
+#At this point, we have 13 columns and 138 rows.
+#Since we are using many more predictors, lets try to train our model using the first 100 records, and test the last 38 
+injury_train <- injury_predictors[1:100,]
+injury_test <- injury_predictors[101:138,]
+injury_train_labels <- injury_subset[1:100, 10] #surgery is column 9
+injury_test_labels <- injury_subset[101:138, 10]
+```
+```{r}
+##Here, I use 'shiny' to make a reactive addition.
+##Research this here: http://shiny.rstudio.com/tutorial/lesson4/
+
+library(class)
+library(gmodels)
+#numericInput("t", "What value of k would you like to try?", 1)
+sliderInput("t", "What value of k would you like to try?", 3, min = 1, max = 37, step = 1)
+renderPrint({
+injCustom <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, input$t)
+CrossTable(x = injury_test_labels, y = injCustom, prop.chisq = FALSE)
+})
+ ```
+```{r}
+#Conduct kNN and inspect results
+injury_predictions1 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 1)
+injury_predictions2 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 2)
+injury_predictions3 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 3)
+injury_predictions4 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 4)
+injury_predictions6 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 6)
+injury_predictions10<- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 10)
+injury_predictions20<- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 20)
+```
+```{r, echo=FALSE}
+cat("Lets observe the crosstabs to see how our models performed.\nRemember, we can look at the crosstab when using kNN here as conveying the following information:\n_________________________________\n| True Negative | False Positive |\n----------------------------------\n| False Negative | True Positive |\n----------------------------------")
+```
+```{r}
+# Zero misclassifications from k = 1
+CrossTable(x = injury_test_labels, y = injury_predictions1, prop.chisq = FALSE)
+# One misclassification from k = 2
+CrossTable(x = injury_test_labels, y = injury_predictions2, prop.chisq = FALSE)
+# 8 misclassification from k = 3
+CrossTable(x = injury_test_labels, y = injury_predictions3, prop.chisq = FALSE)
+# 9 misclassifications from k = 4
+CrossTable(x = injury_test_labels, y = injury_predictions4, prop.chisq = FALSE)
+# 10 misclassifications from k = 6
+CrossTable(x = injury_test_labels, y = injury_predictions6, prop.chisq = FALSE)
+# 8 misclassifications from k = 10
+CrossTable(x = injury_test_labels, y = injury_predictions10, prop.chisq = FALSE)
+# 13 Classifications from k = 20
+CrossTable(x = injury_test_labels, y = injury_predictions20, prop.chisq = FALSE)
+```
+
+
+In the end we find that using the above specified predictors, our results with *k* = {1, 2} were the most accurate.
+
+It is strange to note that *k* = 4 creates a large, immediate jump in the number of misclassifications from *k* = 3, and leads to in fact the maximum number of misclassifcations of any of the *k* tested here.This is due to the nature of this particular data.
+
+We can try to reflect on why lower values of *k* give us the best results. If lower values of *k* are classify more accurately, we can infer that small changes in the data strongly impact the necessity of surgery. Only those cases from the training data which are very similar to the test case are good for prediction uses.
+
+Another thing to note in this case is that the relationship between the predictors and necessity of surgery may be relatively opaque to the analyzing statistician, with no medical experience. The doctors recording the data would have much more understanding of which variables heavily impact necessity of surgery. Without this knowledge, the statistician might include unimportant and obscuring predicting variables, or exclude critically important predicting variables.
+
+A good approach to remedy this issue is to make a few models wich inspect the correlation between the target variable and the predictor. We then use predictor varibles that have a significant correlation with the target variable when we move on to kNN.
+
+From dataset to dataset, these results and conditions will change. You should try various values of k to see which works best for your dataset.

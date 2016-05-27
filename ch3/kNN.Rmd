@@ -1,0 +1,151 @@
+---
+title: "k-Nearest-Neighbors"
+author: "Avik Mohan"
+date: "May 24, 2016"
+output: html_document
+runtime: shiny
+---
+#k-Nearest-Neighbors
+
+The k-Nearest-Neighbor algorithm is a predictive modelling tool used to classify new observations. In this section, we will use injury-incident data from the biomedical files in the SOCR repository to try and predict whether a patient will need surgery based on observations about the patient.
+
+Here, we use the '08_EpiBioSData_Incomplete.csv' file from the SOCR biomedical repository. This data details information about a number of treated injuries sustained by a group of 46 individuals over  wide range of ages.
+
+##**Data Preparation**
+
+It is important to take a look at the data and try to understand all that it is conveying.
+
+```{r}
+injury <- read.csv("~/AAUCLA/SOCR/data/injuryData.csv")
+str(injury)
+```
+*****
+In particular, some of the variables here (like 'x6m.gose' and the variables ending in '.gcs') are not immediately understandable. Here, a quick internet search will return the information that these are certain 'Glasgow Coma Scale' ratings. Take a second to inspect the dataset and make sure you understand the information it presents.
+
+We see that part of the data represents whether the incident resulted in a skull fracture and/or surgery. As a healthcare provider, it may be useful to know if a surgery is likely necessary, to prepare necessary rooms and equiptment ahead of time.
+
+We notice from the str() result above that 'surgery' is currently coded as *int*. For the machine learning algorithms we will use, the predicted trait is expected to be a factor, so lets code this variable as such.
+###Coding Target as Factors
+```{r}
+injury$surgery <- factor(injury$surgery, levels = c("0", "1"), labels = c("No", "Yes"))
+```
+***
+We now turn our attention to the rest of the data.
+
+Suppose that we want to look at the relationship between 'field.gcs' and 'X2013.gose' in relation to whether surgery was needed. Being able to predict whether surgery will be needed based on these values might help in telling a hospital whether they need to prepare an operation room for the patient ahead of time.
+
+We notice that these two variables do not exhibit the same range. Since kNN is very dependent on variable scaling, this could badly affect our readings. 
+
+We normalize these variables using the min-max method. To make this easier than doing the transformation manually, we create a function to help us:
+
+###Normalization
+
+```{r}
+minmax <- function(x){
+  return ((x-min(x)) / (max(x) - min(x)))
+}
+minmax(c(1,2,3,4,5,6,7,8,9))
+minmax(c(.01, .02, .04, .5, .9))
+minmax(c(11234, 345523, 734325, 968352))
+```
+
+We can see now that regardless of the scale of the data, we can reliably scale the values from 0 to 1.
+***
+If we look at the structure of our data however, we notice 'field.gcs' is not recognized as a number, but instead as a factor. To remedy this, we simply transform that column. We then remove the rows with no recorded data for these variables.Finally, we use lapply to create a dataframe with the transformed columns
+```{r}
+str(injury)
+injury_subset <- injury[-(c(2, 37)),]
+injury_subset$field.gcs <- as.integer(levels(injury_subset$field.gcs))[injury_subset$field.gcs]
+str(injury_subset)
+injury_predictors <- as.data.frame(lapply(injury_subset[,c(5,10)], minmax))
+str(injury_predictors)
+```
+
+We can see that our transformation applied correctly.
+***
+
+###Delineating Training and Testing Data
+Now, as there is little use in predicting what is already known, we will only use the first 40 of the 44 observations to train our data. We can then use the last 4 to see how well our model works. The training points are shown in red, and the tested for points are in blue.
+
+```{r}
+injury_train <- injury_predictors[1:40,]
+injury_test <- injury_predictors[41:44,]
+injury_train_labels <- injury_subset[1:40, 13] 
+injury_test_labels <- injury_subset[41:44, 13]
+
+##plotting
+tmp <- injury_test[,1]
+tmp1 <- injury_test[,2]
+plot(injury_train[,1], injury_train[,2], col = "red", pch = 19, xlab = "field.gcs", ylab = "X2013.gose", main = "Training vs Testing Data for kNN", grid(), bg = "gray90")
+
+rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "gray")
+par(grid(col = "white"))
+
+points(injury_train[,1], injury_train[,2], col = "red", pch = 19)
+points(tmp, tmp1, col = "blue", pch = 19)
+
+legend(.4,.3, c("Training Data", "Testing Data"), col = c("red", "blue"),
+       text.col = "green4", lty = c(2, 2), pch = c(19, 19), bg = "gray90")
+```
+***
+
+###Running kNN
+Now, we call the actual kNN function.
+
+```{r}
+library(class)
+
+injury_predictions <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 3)
+injury_predictions
+injury_test_labels
+```
+
+Success! We can see that the injury_predictions data generated from the kNN algorithm matches exactly with the actual injury_test_labels data.
+***
+
+##**Evaluating Model Performance**
+```{r}
+library(gmodels)
+CrossTable(x = injury_test_labels, y = injury_predictions, prop.chisq = FALSE)
+```
+
+In this crosstab (refer to 'Managing Data with R' to see how to prodcue crosstabs) we can label the 4 center boxes as follows:
+Upper-Left: True Negative - Correctly identified negatives
+Lower-Left: False Negative - Incorrectly identified negatives
+Upper-Right: False Positive - Incorrectly identified positives
+Lower-Right: True Positive - Correctly identified positives
+
+Here, since the model was fully correct in its predictions, we have only True Negatives and True Positives. This is unlikely to happen with most data. Run on other data with a larger amount of testing data, its likely that some False Negatives and False Positive are to occur.
+***
+
+##**Improving Model Performance**
+
+Often, the simplest and quickest impactful change we can make is to change *k*.
+
+```{r}
+library(class)
+
+injury_prediction1 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 1)
+injury_prediction4 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 4)
+injury_prediction10 <- knn(train = injury_train, test = injury_test, cl = injury_train_labels, k = 10)
+#Result when k = 1
+injury_prediction1
+#Result when k = 4
+injury_prediction4
+#Result when k = 10
+injury_prediction10
+#Acutal
+injury_test_labels
+```
+
+In this model, changing the value of *k* only worsens the result, but with larger data sets (especially larger amounts of test data) various values of *k* should be tried out and their crosstabs examined.
+
+In this way, you can tailor the algorithm to the specific dataset - perhaps false positives are ok, but you need to completely avoid false negatives. Using the crosstab can help you find the best value of *k* for your data.
+
+##**Summary**
+
+The k-Nearest-Neighbor Algorithm is a simple, but often surprisingly effective predictive model. It is very quick to train due to this simplicity, but it takes very long to compute a prediction as the algorithm needs to compute distance to every other point.
+
+It's also important to note that kNN is considered *lazy* learning, since there is no real abstraction or generalization from the data. The training input is taken in and used more or less verbatim. A non-lazy algorithm makes inspects and analyzes input upon receiving it, not only when a query is made.
+
+Lastly, in practical uses of kNN, its important to understand the data you are working with and appropriately choose the variables to use as predictors and the value for k. The crosstab evaluation of the kNN result is a great tool for helping to choose these inputs.
