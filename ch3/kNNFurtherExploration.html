@@ -68,7 +68,9 @@ img {
 </div>
 
 
-<p>//runtime: shiny What we will do here is again conduct the kNN algorithm, but using as many of the predictors as we can to help train our model.</p>
+<p>runtime: shiny</p>
+<pre class="r"><code>set.seed(1, kind = NULL, normal.kind = NULL)</code></pre>
+<p>What we will do here is again conduct the kNN algorithm, but using as many of the predictors as we can to help train our model.</p>
 <p>We will also use the ‘08_EpiBioSData_Complete.csv’ data from the SOCR biomed repository, which includes much more data. Note that in this dataset, one needs to manually ‘line-up’ the data, as the mutliple records of data are kept in the same rows. In essence, move all the columns with the suffixes ‘.1’ and ‘.2’ to line up with the data without the numeric suffixes.</p>
 <p>This section will contain significantly less explanation of the steps taken, as they mirror the process covered in main kNN article.</p>
 <pre class="r"><code>injury &lt;- read.csv(&quot;~/AAUCLA/SOCR/data/fullInjuryData.csv&quot;)
@@ -158,11 +160,11 @@ str(injury_predictors)</code></pre>
 ##  $ how        : num  0.333 0.167 0.333 0.333 1 ...</code></pre>
 <pre class="r"><code>##Delineate the training and test data
 #At this point, we have 13 columns and 138 rows.
-#Since we are using many more predictors, lets try to train our model using the first 100 records, and test the last 38 
-injury_train &lt;- injury_predictors[1:100,]
-injury_test &lt;- injury_predictors[101:138,]
-injury_train_labels &lt;- injury_subset[1:100, 10] #surgery is column 9
-injury_test_labels &lt;- injury_subset[101:138, 10]</code></pre>
+#Since we are using many more predictors, lets try to train our model using the first 120 records, and test the last 18 
+injury_train &lt;- injury_predictors[1:120,]
+injury_test &lt;- injury_predictors[121:138,]
+injury_train_labels &lt;- injury_subset[1:120, 10] #surgery is column 9
+injury_test_labels &lt;- injury_subset[121:138, 10]</code></pre>
 <pre class="r"><code>##Here, I use 'shiny' to make a reactive addition.
 ##Research this here: http://shiny.rstudio.com/tutorial/lesson4/
 
@@ -204,24 +206,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions1, prop.chisq = FALSE)<
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions1 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        15 |         0 |        15 | 
-##                    |     1.000 |     0.000 |     0.395 | 
+##                 No |         8 |         0 |         8 | 
+##                    |     1.000 |     0.000 |     0.444 | 
 ##                    |     1.000 |     0.000 |           | 
-##                    |     0.395 |     0.000 |           | 
+##                    |     0.444 |     0.000 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         0 |        23 |        23 | 
-##                    |     0.000 |     1.000 |     0.605 | 
+##                Yes |         0 |        10 |        10 | 
+##                    |     0.000 |     1.000 |     0.556 | 
 ##                    |     0.000 |     1.000 |           | 
-##                    |     0.000 |     0.605 |           | 
+##                    |     0.000 |     0.556 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        15 |        23 |        38 | 
-##                    |     0.395 |     0.605 |           | 
+##       Column Total |         8 |        10 |        18 | 
+##                    |     0.444 |     0.556 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -238,24 +240,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions2, prop.chisq = FALSE)<
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions2 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        15 |         0 |        15 | 
-##                    |     1.000 |     0.000 |     0.395 | 
+##                 No |         8 |         0 |         8 | 
+##                    |     1.000 |     0.000 |     0.444 | 
 ##                    |     1.000 |     0.000 |           | 
-##                    |     0.395 |     0.000 |           | 
+##                    |     0.444 |     0.000 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         0 |        23 |        23 | 
-##                    |     0.000 |     1.000 |     0.605 | 
+##                Yes |         0 |        10 |        10 | 
+##                    |     0.000 |     1.000 |     0.556 | 
 ##                    |     0.000 |     1.000 |           | 
-##                    |     0.000 |     0.605 |           | 
+##                    |     0.000 |     0.556 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        15 |        23 |        38 | 
-##                    |     0.395 |     0.605 |           | 
+##       Column Total |         8 |        10 |        18 | 
+##                    |     0.444 |     0.556 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -272,24 +274,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions3, prop.chisq = FALSE)<
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions3 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        11 |         4 |        15 | 
-##                    |     0.733 |     0.267 |     0.395 | 
-##                    |     0.647 |     0.190 |           | 
-##                    |     0.289 |     0.105 |           | 
+##                 No |         5 |         3 |         8 | 
+##                    |     0.625 |     0.375 |     0.444 | 
+##                    |     0.714 |     0.273 |           | 
+##                    |     0.278 |     0.167 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         6 |        17 |        23 | 
-##                    |     0.261 |     0.739 |     0.605 | 
-##                    |     0.353 |     0.810 |           | 
-##                    |     0.158 |     0.447 |           | 
+##                Yes |         2 |         8 |        10 | 
+##                    |     0.200 |     0.800 |     0.556 | 
+##                    |     0.286 |     0.727 |           | 
+##                    |     0.111 |     0.444 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        17 |        21 |        38 | 
-##                    |     0.447 |     0.553 |           | 
+##       Column Total |         7 |        11 |        18 | 
+##                    |     0.389 |     0.611 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -306,24 +308,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions4, prop.chisq = FALSE)<
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions4 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        11 |         4 |        15 | 
-##                    |     0.733 |     0.267 |     0.395 | 
-##                    |     0.688 |     0.182 |           | 
-##                    |     0.289 |     0.105 |           | 
+##                 No |         5 |         3 |         8 | 
+##                    |     0.625 |     0.375 |     0.444 | 
+##                    |     0.714 |     0.273 |           | 
+##                    |     0.278 |     0.167 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         5 |        18 |        23 | 
-##                    |     0.217 |     0.783 |     0.605 | 
-##                    |     0.312 |     0.818 |           | 
-##                    |     0.132 |     0.474 |           | 
+##                Yes |         2 |         8 |        10 | 
+##                    |     0.200 |     0.800 |     0.556 | 
+##                    |     0.286 |     0.727 |           | 
+##                    |     0.111 |     0.444 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        16 |        22 |        38 | 
-##                    |     0.421 |     0.579 |           | 
+##       Column Total |         7 |        11 |        18 | 
+##                    |     0.389 |     0.611 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -340,24 +342,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions6, prop.chisq = FALSE)<
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions6 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        10 |         5 |        15 | 
-##                    |     0.667 |     0.333 |     0.395 | 
-##                    |     0.769 |     0.200 |           | 
-##                    |     0.263 |     0.132 |           | 
+##                 No |         4 |         4 |         8 | 
+##                    |     0.500 |     0.500 |     0.444 | 
+##                    |     0.571 |     0.364 |           | 
+##                    |     0.222 |     0.222 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         3 |        20 |        23 | 
-##                    |     0.130 |     0.870 |     0.605 | 
-##                    |     0.231 |     0.800 |           | 
-##                    |     0.079 |     0.526 |           | 
+##                Yes |         3 |         7 |        10 | 
+##                    |     0.300 |     0.700 |     0.556 | 
+##                    |     0.429 |     0.636 |           | 
+##                    |     0.167 |     0.389 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        13 |        25 |        38 | 
-##                    |     0.342 |     0.658 |           | 
+##       Column Total |         7 |        11 |        18 | 
+##                    |     0.389 |     0.611 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -374,24 +376,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions10, prop.chisq = FALSE)
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions10 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |        11 |         4 |        15 | 
-##                    |     0.733 |     0.267 |     0.395 | 
-##                    |     0.846 |     0.160 |           | 
-##                    |     0.289 |     0.105 |           | 
+##                 No |         5 |         3 |         8 | 
+##                    |     0.625 |     0.375 |     0.444 | 
+##                    |     0.714 |     0.273 |           | 
+##                    |     0.278 |     0.167 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         2 |        21 |        23 | 
-##                    |     0.087 |     0.913 |     0.605 | 
-##                    |     0.154 |     0.840 |           | 
-##                    |     0.053 |     0.553 |           | 
+##                Yes |         2 |         8 |        10 | 
+##                    |     0.200 |     0.800 |     0.556 | 
+##                    |     0.286 |     0.727 |           | 
+##                    |     0.111 |     0.444 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |        13 |        25 |        38 | 
-##                    |     0.342 |     0.658 |           | 
+##       Column Total |         7 |        11 |        18 | 
+##                    |     0.389 |     0.611 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
@@ -408,24 +410,24 @@ CrossTable(x = injury_test_labels, y = injury_predictions20, prop.chisq = FALSE)
 ## |-------------------------|
 ## 
 ##  
-## Total Observations in Table:  38 
+## Total Observations in Table:  18 
 ## 
 ##  
 ##                    | injury_predictions20 
 ## injury_test_labels |        No |       Yes | Row Total | 
 ## -------------------|-----------|-----------|-----------|
-##                 No |         5 |        10 |        15 | 
-##                    |     0.333 |     0.667 |     0.395 | 
-##                    |     0.714 |     0.323 |           | 
-##                    |     0.132 |     0.263 |           | 
+##                 No |         2 |         6 |         8 | 
+##                    |     0.250 |     0.750 |     0.444 | 
+##                    |     0.667 |     0.400 |           | 
+##                    |     0.111 |     0.333 |           | 
 ## -------------------|-----------|-----------|-----------|
-##                Yes |         2 |        21 |        23 | 
-##                    |     0.087 |     0.913 |     0.605 | 
-##                    |     0.286 |     0.677 |           | 
-##                    |     0.053 |     0.553 |           | 
+##                Yes |         1 |         9 |        10 | 
+##                    |     0.100 |     0.900 |     0.556 | 
+##                    |     0.333 |     0.600 |           | 
+##                    |     0.056 |     0.500 |           | 
 ## -------------------|-----------|-----------|-----------|
-##       Column Total |         7 |        31 |        38 | 
-##                    |     0.184 |     0.816 |           | 
+##       Column Total |         3 |        15 |        18 | 
+##                    |     0.167 |     0.833 |           | 
 ## -------------------|-----------|-----------|-----------|
 ## 
 ## </code></pre>
