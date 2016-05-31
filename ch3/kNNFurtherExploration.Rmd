@@ -5,7 +5,9 @@ date: "May 24, 2016"
 output: html_document
 runtime: shiny
 ---
-
+```{r}
+set.seed(1, kind = NULL, normal.kind = NULL)
+```
 What we will do here is again conduct the kNN algorithm, but using as many of the predictors as we can to help train our model. 
 
 We will also use the '08_EpiBioSData_Complete.csv' data from the SOCR biomed repository, which includes much more data. Note that in this dataset, one needs to manually 'line-up' the data, as the mutliple records of data are kept in the same rows. In essence, move all the columns with the suffixes '.1' and '.2' to line up with the data without the numeric suffixes.
@@ -45,11 +47,11 @@ injury_predictors <- as.data.frame(lapply(injury_subset[,-10], minmax))
 str(injury_predictors)
 ##Delineate the training and test data
 #At this point, we have 13 columns and 138 rows.
-#Since we are using many more predictors, lets try to train our model using the first 100 records, and test the last 38 
-injury_train <- injury_predictors[1:100,]
-injury_test <- injury_predictors[101:138,]
-injury_train_labels <- injury_subset[1:100, 10] #surgery is column 9
-injury_test_labels <- injury_subset[101:138, 10]
+#Since we are using many more predictors, lets try to train our model using the first 120 records, and test the last 18 
+injury_train <- injury_predictors[1:120,]
+injury_test <- injury_predictors[121:138,]
+injury_train_labels <- injury_subset[1:120, 10] #surgery is column 9
+injury_test_labels <- injury_subset[121:138, 10]
 ```
 ```{r}
 ##Here, I use 'shiny' to make a reactive addition.
