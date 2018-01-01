@@ -1,7 +1,3 @@
 # MLR
-Machine Learning in R
 
-Prepend 'http://htmlpreview.github.io/?' to html url's to see the rendered HTML file.
-
-Example:
-http://htmlpreview.github.io/?https://github.com/avikbmohan/MLR/blob/master/ch3/kNNFurtherExploration.html
+A brief introduction to machine learning in R, created for the UCLA statistics department. Covers basic data structures and how to run kNN.
